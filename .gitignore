@@ -1,7 +1,10 @@
 # Compiled class file
 *.class
 
-Form File
+target/classes/
+target/maven-status/
+target/test-classes/
+
 
 
 # Log file
