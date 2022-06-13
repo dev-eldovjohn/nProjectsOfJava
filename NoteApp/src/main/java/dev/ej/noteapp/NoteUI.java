@@ -139,10 +139,10 @@ public class NoteUI extends javax.swing.JFrame {
         private long objid;
         private String note;
 
-        public Note() {
+        public Table_Notes() {
         }
 
-        public Note(long objid, String note) {
+        public Table_Notes(long objid, String note) {
             this.objid = objid;
             this.note = note;
         }
@@ -170,7 +170,7 @@ public class NoteUI extends javax.swing.JFrame {
             return "";
         }
 
-        private Note readFromDB(long objid) {
+        private Table_Notes readFromDB(long objid) {
 
             return null;
         }
