@@ -4,6 +4,18 @@
  */
 package dev.ej.noteapp;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.DefaultListModel;
+import javax.swing.DefaultListSelectionModel;
+
 /**
  *
  * @author JohnPC
@@ -14,8 +26,11 @@ public class NoteUI extends javax.swing.JFrame {
      * Creates new form NoteUI
      */
     public NoteUI() {
+        conn = getConnection();
         initComponents();
+
     }
+    private static Logger LOG = Logger.getLogger(NoteUI.class.getName());
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -32,11 +47,52 @@ public class NoteUI extends javax.swing.JFrame {
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
         jButton1 = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Note App");
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosed(java.awt.event.WindowEvent evt) {
+                formWindowClosed(evt);
+            }
+        });
 
-        jList1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 2, true));
+        jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+
+        jList1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         jList1.setFont(jList1.getFont().deriveFont(jList1.getFont().getSize()+4f));
+        jList1.setModel(readAll());
+        jList1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jList1.setToolTipText("");
+        jList1.setSelectionModel(new DefaultListSelectionModel() {
+            public void setSelectionInterval(int index0, int index1) {
+                if (index0 == index1) {
+                    if (isSelectedIndex(index0)) {
+                        removeSelectionInterval(index0, index0);
+                        return;
+                    }
+                }
+                super.setSelectionInterval(index0, index1);
+            }
+
+            @Override
+            public void addSelectionInterval(int index0, int index1) {
+                if (index0 == index1) {
+                    if (isSelectedIndex(index0)) {
+                        removeSelectionInterval(index0, index0);
+                        return;
+                    }
+                    super.addSelectionInterval(index0, index1);
+                }
+            }
+
+        });
+        jList1.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                jList1ValueChanged(evt);
+            }
+        });
         jScrollPane1.setViewportView(jList1);
 
         jTextArea1.setColumns(20);
@@ -44,9 +100,27 @@ public class NoteUI extends javax.swing.JFrame {
         jTextArea1.setLineWrap(true);
         jTextArea1.setRows(5);
         jTextArea1.setWrapStyleWord(true);
+        jTextArea1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         jScrollPane2.setViewportView(jTextArea1);
 
-        jButton1.setText("Save Note");
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/bookmark_remove_FILL0_wght400_GRAD0_opsz48.png"))); // NOI18N
+        jButton1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/bookmark_add_FILL0_wght400_GRAD0_opsz48.png"))); // NOI18N
+        jButton3.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setFont(jLabel1.getFont().deriveFont((jLabel1.getFont().getStyle() | java.awt.Font.ITALIC) | java.awt.Font.BOLD, jLabel1.getFont().getSize()+4));
+        jLabel1.setText("Note App");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -54,28 +128,31 @@ public class NoteUI extends javax.swing.JFrame {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(jScrollPane2)
-                        .addContainerGap())
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 177, Short.MAX_VALUE)
-                        .addComponent(jButton1)
-                        .addGap(170, 170, 170))))
+                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 406, Short.MAX_VALUE)
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 374, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jButton1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                            .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 44, Short.MAX_VALUE)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(18, 18, 18)
-                        .addComponent(jButton1)
-                        .addGap(0, 36, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1))
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 396, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
 
@@ -99,10 +176,69 @@ public class NoteUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        try {
+            conn.close();
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_formWindowClosed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        Table_Notes note = jList1.getSelectedValue();
+        if (note != null) {
+            note.deleteFromDB(conn);
+            listData.remove(jList1.getSelectedIndex());
+        }
+        jTextArea1.setText("");
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jList1ValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jList1ValueChanged
+        LOG.info("Selected Index = "+jList1.getSelectedIndex());
+        if (!evt.getValueIsAdjusting()) {
+            if (jList1.getSelectedIndex() > -1) {
+                Table_Notes note = jList1.getSelectedValue();
+                jTextArea1.setText(note.getNote());
+            }else{
+                 jTextArea1.setText("");
+            }
+
+        }
+    }//GEN-LAST:event_jList1ValueChanged
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        Table_Notes note = jList1.getSelectedValue();
+        if (note == null) {
+            LOG.info((jTextArea1.getText() != null) + "==>" + jTextArea1.getText());
+            LOG.info(jTextArea1.getText().trim().equals("") + "==>" + jTextArea1.getText().trim());
+            if (jTextArea1.getText() != null && !jTextArea1.getText().trim().equals("")) {
+                note = new Table_Notes(jTextArea1.getText());
+                int ret = note.saveToDB(conn);
+                if (ret > 0) {
+                    listData.addElement(note);
+                }
+            }
+        } else {
+            if (jTextArea1.getText() != null && !jTextArea1.getText().trim().equals("")) {
+                note.setNote(jTextArea1.getText());
+                note.saveToDB(conn);
+            } else {
+                note.deleteFromDB(conn);
+            }
+        }
+        jTextArea1.setText("");
+        jList1.clearSelection();
+    }//GEN-LAST:event_jButton3ActionPerformed
+
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
+
+//        Handler handle = new ConsoleHandler();
+//        handle.setLevel(Level.ALL);
+//        LOG.addHandler(handle);
+
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
@@ -116,13 +252,13 @@ public class NoteUI extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(NoteUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(NoteUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(NoteUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(NoteUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
@@ -134,12 +270,34 @@ public class NoteUI extends javax.swing.JFrame {
         });
     }
 
+    public static Connection getConnection() {
+        if (conn == null) {
+            try {
+                Class.forName("org.postgresql.Driver");
+                conn = DriverManager
+                        .getConnection("jdbc:postgresql://localhost:5432/nProjectsOfJava",
+                                "postgres", "a1234");
+                conn.setAutoCommit(false);
+            } catch (Exception ex) {
+                LOG.log(Level.SEVERE, "Exception while creating Connection ", ex);
+                System.exit(0);
+            }
+            LOG.info("Opened database successfully");
+        }
+        return conn;
+
+    }
+
     class Table_Notes {
 
-        private long objid;
+        private long objid = 0;
         private String note;
 
         public Table_Notes() {
+        }
+
+        public Table_Notes(String note) {
+            this.note = note;
         }
 
         public Table_Notes(long objid, String note) {
@@ -159,33 +317,76 @@ public class NoteUI extends javax.swing.JFrame {
             this.note = note;
         }
 
-        private String saveToDB() {
-            String command = new String();
-            if (objid > 0) {
-                command = "INSERT INTO "+this.getClass().getName()+" VALUES  (" + note + ")";
+        private int saveToDB(Connection conn) {
+            String command;
+            if (objid == 0) {
+                command = "INSERT INTO Table_Notes (NOTE) VALUES  ('" + note + "')";
             } else {
-                command = "UPDATE TABLE TABLE_NOTES WHERE NOTE =" + note + " WHERE OBJID = '" + objid + "";
+                command = "UPDATE Table_Notes SET NOTE ='" + note + "' WHERE OBJID = '" + objid + "' ;";
+            }
+            LOG.info(command);
+            int ret = 0;
+            try (Statement stmt = conn.createStatement()) {
+                ret = stmt.executeUpdate(command);
+                conn.commit();
+            } catch (Exception ex) {
+                LOG.log(Level.SEVERE, "Exception while Saving Note ", ex);
+                ret = -1;
             }
 
-            return "";
+            return ret;
         }
 
-        private Table_Notes readFromDB(long objid) {
+        private int deleteFromDB(Connection conn) {
+            String command;
+            int ret = 0;
+            if (objid == 0) {
+                LOG.info("Nothing to Delete");
+            } else {
+                command = "DELETE FROM Table_Notes WHERE OBJID = '" + objid + "' ;";
+                LOG.info(command);
+                try (Statement stmt = conn.createStatement()) {
+                    ret = stmt.executeUpdate(command);
+                    conn.commit();
+                } catch (Exception ex) {
+                    LOG.log(Level.SEVERE, "Exception while Deleting Note ", ex);
+                    ret = -1;
+                }
+            }
 
-            return null;
+            return ret;
         }
 
         @Override
         public String toString() {
-            return "Note{" + "objid=" + objid + ", note=" + note + '}';
+            return note;
         }
 
     }
 
+    public DefaultListModel<Table_Notes> readAll() {
+        getConnection();
+//        Vector<Table_Notes> listData = new Vector<>();
+        try (Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery("SELECT * FROM TABLE_NOTES ;");
+            while (rs.next()) {
+                long objid = rs.getInt("objid");
+                String note = rs.getString("note");
+                listData.addElement(new Table_Notes(objid, note));
+            }
+        } catch (Exception ex) {
+            LOG.log(Level.SEVERE, "Exception while Saving Note ", ex);
+        }
+        return listData;
+    }
 
+    private static Connection conn = null;
+    DefaultListModel<Table_Notes> listData = new DefaultListModel<>();
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
-    private javax.swing.JList<String> jList1;
+    private javax.swing.JButton jButton3;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JList<Table_Notes> jList1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
